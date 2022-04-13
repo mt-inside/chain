@@ -1,0 +1,257 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: chain
+  labels:
+    istio-injection: enabled
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: chain
+  name: one
+  labels:
+    app: one
+    version: v0.0.1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: one
+      version: v0.0.1
+  template:
+    metadata:
+      labels:
+        app: one
+        version: v0.0.1
+    spec:
+      containers:
+      - name: chain
+        image: docker.io/mtinside/chain:0.0.1
+        imagePullPolicy: Always
+        env:
+          - { name: CHAIN_OUTPUT, value: "hello from one" }
+          - { name: CHAIN_NEXT, value: "two" }
+        ports:
+          - name: http-service
+            containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: chain
+  name: one
+spec:
+  selector:
+    app: one
+  ports:
+    - name: http-service
+      protocol: TCP
+      port: 80
+      targetPort: http-service
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: one
+spec:
+  host: one
+  subsets:
+  - name: v0-0-1 # Must be RFC1123 hostname
+    labels:
+      version: v0.0.1
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: one
+spec:
+  hosts:
+  - one
+  http:
+  - route:
+    - destination:
+        host: one
+        subset: v0-0-1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: chain
+  name: two
+  labels:
+    app: two
+    version: v0.0.1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: two
+      version: v0.0.1
+  template:
+    metadata:
+      labels:
+        app: two
+        version: v0.0.1
+    spec:
+      containers:
+      - name: chain
+        image: docker.io/mtinside/chain:0.0.1
+        imagePullPolicy: Always
+        env:
+          - { name: CHAIN_OUTPUT, value: "hello from two" }
+          - { name: CHAIN_NEXT, value: "three" }
+        ports:
+          - name: http-service
+            containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: chain
+  name: two-vnext
+  labels:
+    app: two
+    version: v0.0.2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: two
+      version: v0.0.2
+  template:
+    metadata:
+      labels:
+        app: two
+        version: v0.0.2
+    spec:
+      containers:
+      - name: chain
+        image: docker.io/mtinside/chain:0.0.1
+        imagePullPolicy: Always
+        env:
+          - { name: CHAIN_OUTPUT, value: "hello from two PREVIEW EDITION!" }
+          - { name: CHAIN_NEXT, value: "three" }
+        ports:
+          - name: http-service
+            containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: chain
+  name: two
+spec:
+  selector:
+    app: two
+  ports:
+    - name: http-service
+      protocol: TCP
+      port: 80
+      targetPort: http-service
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: two
+spec:
+  host: two
+  subsets:
+  - name: v0-0-1
+    labels:
+      version: v0.0.1
+  - name: v0-0-2
+    labels:
+      version: v0.0.2
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: two
+spec:
+  hosts:
+  - two
+  http:
+  # Must only be one VS for this hostname.
+  # I think the more specific ones need to come first
+  - match:
+    - headers:
+        x-override-two:
+          exact: v0.0.2
+    route:
+    - destination:
+        host: two
+        subset: v0-0-2
+  - route:
+    - destination:
+        host: two
+        subset: v0-0-1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: chain
+  name: three
+  labels:
+    app: three
+    version: v0.0.1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: three
+      version: v0.0.1
+  template:
+    metadata:
+      labels:
+        app: three
+        version: v0.0.1
+    spec:
+      containers:
+      - name: chain
+        image: docker.io/mtinside/chain:0.0.1
+        imagePullPolicy: Always
+        env:
+          - { name: CHAIN_OUTPUT, value: "hello from three" }
+        ports:
+          - name: http-service
+            containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: chain
+  name: three
+spec:
+  selector:
+    app: three
+  ports:
+    - name: http-service
+      protocol: TCP
+      port: 80
+      targetPort: http-service
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: three
+spec:
+  host: three
+  subsets:
+  - name: v0-0-1
+    labels:
+      version: v0.0.1
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: three
+spec:
+  hosts:
+  - three
+  http:
+  - route:
+    - destination:
+        host: three
+        subset: v0-0-1

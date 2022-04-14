@@ -218,6 +218,7 @@ spec:
         imagePullPolicy: Always
         env:
           - { name: CHAIN_OUTPUT, value: "hello from three" }
+          - { name: CHAIN_NEXT, value: "http-log" }
         ports:
           - name: http-service
             containerPort: 8080
@@ -261,3 +262,43 @@ spec:
     - destination:
         host: three
         subset: v0-0-1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: chain
+  name: http-log
+  labels:
+    app: http-log
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: http-log
+  template:
+    metadata:
+      labels:
+        app: http-log
+    spec:
+      containers:
+      - name: http-log
+        image: docker.io/mtinside/http-log:0.6
+        imagePullPolicy: Always
+        args: [ "-M", "-o=pretty" ]
+        ports:
+          - name: http-service
+            containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: chain
+  name: http-log
+spec:
+  selector:
+    app: http-log
+  ports:
+    - name: http-service
+      protocol: TCP
+      port: 80
+      targetPort: http-service

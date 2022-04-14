@@ -54,6 +54,7 @@ spec:
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
+  namespace: chain
   name: one
 spec:
   host: one
@@ -65,6 +66,7 @@ spec:
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
+  namespace: chain
   name: one
 spec:
   hosts:
@@ -154,6 +156,7 @@ spec:
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
+  namespace: chain
   name: two
 spec:
   host: two
@@ -168,6 +171,7 @@ spec:
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
+  namespace: chain
   name: two
 spec:
   hosts:
@@ -235,6 +239,7 @@ spec:
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
+  namespace: chain
   name: three
 spec:
   host: three
@@ -246,6 +251,7 @@ spec:
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
+  namespace: chain
   name: three
 spec:
   hosts:

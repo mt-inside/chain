@@ -30,7 +30,9 @@ func main() {
 			log.Fatal(err)
 		}
 		for k, _ := range r.Header {
-			if strings.HasPrefix(k, "X-Override-") {
+			if strings.HasPrefix(k, "X-Override-") || // ours, for override-routing
+				strings.HasPrefix(k, "X-B3-") || // zipkin trace propagation, for istio o11y
+				strings.HasPrefix(k, "X-Request-Id") { // ditto
 				req.Header.Add(k, r.Header.Get(k))
 			}
 		}
